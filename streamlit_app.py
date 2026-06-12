@@ -53,10 +53,11 @@ def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
     ecomm_orders_by_store = (
         ecomm_orders
         .groupby("InventoryStore")
-        .agg(total_orders_fulfilled=("Qty", "sum"))
+        .agg(ecomm_orders=("Qty", "sum"))
     )
+    ecomm_orders_by_store["ecomm_orders"] = -1 * ecomm_orders_by_store["ecomm_orders"]
     combined_ecomm = pd.merge(combined, ecomm_orders_by_store, left_index=True, right_index=True)
-    combined_ecomm["ecomm_order_percent_of_sales"] = combined_ecomm["total_orders_fulfilled"] / combined_ecomm["total_units_sold"]
+    combined_ecomm["ecomm_percent_of_sales"] = combined_ecomm["ecomm_orders"] / combined_ecomm["total_units_sold"]
     return combined_ecomm
 
 conn = st.connection("s3", type=FilesConnection)
