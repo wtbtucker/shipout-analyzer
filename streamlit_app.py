@@ -6,6 +6,7 @@ from datetime import datetime, date, timedelta
 def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> pd.DataFrame:
     # start_date has format MM/DD/YYYY
     start_dt = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
 
     retail_stores = [
         1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16,
