@@ -64,6 +64,8 @@ conn = st.connection("s3", type=FilesConnection)
 # Load RICS Inventory detail report for only footwear
 inventory_detail = conn.read("rics-file-exports/InventoryDetail.csv", input_format="csv", ttl=600)
 
+st.title("Shipout Analyzer")
+
 today = datetime.today()
 # Set default option as year to date
 default_start = today.replace(month=1, day=1)
@@ -82,7 +84,7 @@ start_date, end_date = selected_range
 filtered_df = filter_transactions(start_date, end_date, inventory_detail)
 shipouts_by_store = compute_shipouts_by_store(filtered_df)
 
-st.title("Shipout Analyzer")
+
 st.write(f"Start date: {start_date}")
 total_shipouts = shipouts_by_store["shipout_units_requested"].sum()
 st.write(f"Total number of shipouts: {total_shipouts}")
