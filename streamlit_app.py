@@ -1,30 +1,9 @@
 import pandas as pd
 import streamlit as st
 from st_files_connection import FilesConnection
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 
-def get_start_date(date_option: str) -> datetime:
-    today = datetime.today()
-
-    if date_option == "month_to_date":
-        return datetime(today.year, today.month, 1)
-
-    if date_option == "year_to_date":
-        return datetime(today.year, 1, 1)
-
-    if date_option == "quarter_to_date":
-        quarter_start_month = ((today.month - 1) // 3) * 3 + 1
-        return datetime(today.year, quarter_start_month, 1)
-
-    if date_option == "last_30_days":
-        return today - timedelta(days=30)
-
-    if date_option == "last_90_days":
-        return today - timedelta(days=90)
-
-    raise ValueError(f"Unknown date option: {date_option}")
-
-def filter_transactions(start_date: datetime, df: pd.DataFrame) -> pd.DataFrame:
+def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> pd.DataFrame:
     # start_date has format MM/DD/YYYY
     start_dt = pd.to_datetime(start_date)
 
@@ -45,7 +24,7 @@ def filter_transactions(start_date: datetime, df: pd.DataFrame) -> pd.DataFrame:
 
     stores_to_include = first_txn[first_txn <= start_dt].index
 
-    return df[(df["InventoryStore"].isin(stores_to_include))&(df["InventoryDate"]>=start_dt)]
+    return df[(df["InventoryStore"].isin(stores_to_include))&(df["InventoryDate"]>=start_dt)&(df["InventoryDate"]<=end_date)]
 
 def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
     transfers = df[df["InventoryType"]=="Transfer In"]
@@ -74,19 +53,22 @@ conn = st.connection("s3", type=FilesConnection)
 # Load RICS Inventory detail report for only footwear
 inventory_detail = conn.read("rics-file-exports/InventoryDetail.csv", input_format="csv", ttl=600)
 
-date_option = st.selectbox(
+today = datetime.today()
+# Set default option as year to date
+default_start = today.replace(month=1, day=1)
+
+selected_range = st.date_input(
     "Date range",
-    [
-        "month_to_date",
-        "quarter_to_date",
-        "year_to_date",
-        "last_30_days",
-        "last_90_days",
-    ],
+    value=(default_start, today),
+    format="MM/DD/YYYY",
 )
 
-start_date = get_start_date(date_option=date_option)
-filtered_df = filter_transactions(start_date, inventory_detail)
+if len(selected_range) != 2:
+    st.stop()
+
+start_date, end_date = selected_range
+
+filtered_df = filter_transactions(start_date, end_date, inventory_detail)
 shipouts_by_store = compute_shipouts_by_store(filtered_df)
 
 st.write(f"Start date: {start_date}")
