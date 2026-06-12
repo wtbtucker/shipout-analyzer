@@ -48,7 +48,16 @@ def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
     
     combined = pd.merge(sales_by_store, shipouts_by_store, left_index=True, right_index=True)
     combined["shipout_percent_of_sales"] = combined["shipout_units_requested"] / combined["total_units_sold"]    
-    return combined
+
+    ecomm_orders = df[(df["InventoryType"]=="Transfer Out")&(df["Comment"].isna())]
+    ecomm_orders_by_store = (
+        ecomm_orders
+        .groupby("InventoryStore")
+        .agg(total_orders_fulfilled=("Qty", "sum"))
+    )
+    combined_ecomm = pd.merge(combined, ecomm_orders_by_store, left_index=True, right_index=True)
+    combined_ecomm["ecomm_order_percent_of_sales"] = combined_ecomm["total_orders_fulfilled"] / combined_ecomm["total_units_sold"]
+    return combined_ecomm
 
 conn = st.connection("s3", type=FilesConnection)
 # Load RICS Inventory detail report for only footwear
