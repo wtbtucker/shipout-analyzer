@@ -82,6 +82,7 @@ start_date, end_date = selected_range
 filtered_df = filter_transactions(start_date, end_date, inventory_detail)
 shipouts_by_store = compute_shipouts_by_store(filtered_df)
 
+st.title("Shipout Analyzer")
 st.write(f"Start date: {start_date}")
 total_shipouts = shipouts_by_store["shipout_units_requested"].sum()
 st.write(f"Total number of shipouts: {total_shipouts}")
@@ -89,4 +90,5 @@ total_units_sold = shipouts_by_store["total_units_sold"].sum()
 st.write(f"Total sales: {total_units_sold}")
 shipout_percentage = (total_shipouts / total_units_sold) * 100
 st.write(f"Average shipout percentage: {shipout_percentage:.2f}%")
-st.write(shipouts_by_store.sort_values(by="shipout_percent_of_sales", ascending=False))
+st.dataframe(shipouts_by_store.sort_values(by="shipout_percent_of_sales", ascending=False))
+st.write("Data Source: RICS Inventory Detail report. Transfers with transfer code starting with 'SHP' were identified as shipouts. Transfers with no transfer code were identified as ecomm orders")
