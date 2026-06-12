@@ -1,0 +1,5 @@
+.streamlit/
+.venv/
+.ipynb_checkpoints/
+*.json
+*.csv
