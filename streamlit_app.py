@@ -21,13 +21,13 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
         df.groupby("InventoryStore")["InventoryDate"]
         .min()
     )
-    
+
     st.write(df["InventoryDate"].min())
     st.write(df["InventoryDate"].max())
     st.write(first_txn.sort_values())
     st.write(first_txn[first_txn > start_dt].sort_values())
 
-    stores_to_include = first_txn[first_txn <= start_dt].index
+    stores_to_include = first_txn[first_txn <= end_date].index
 
     return df[
         (df["InventoryStore"].isin(stores_to_include))&
