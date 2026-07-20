@@ -17,24 +17,23 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
     df = df.copy()
     df["InventoryDate"] = pd.to_datetime(df["InventoryDate"], errors="coerce")
     df["InventoryStore"] = pd.to_numeric(df["InventoryStore"], errors="coerce")
+    df["Qty"] = pd.to_numeric(df["Qty"], errors="coerce")
     df = df[df["InventoryStore"].isin(retail_stores)]
     first_txn = (
         df.groupby("InventoryStore")["InventoryDate"]
         .min()
     )
 
-    st.write(df["InventoryDate"].min())
-    st.write(df["InventoryDate"].max())
-    st.write(first_txn.sort_values())
-    st.write(first_txn[first_txn > start_dt].sort_values())
-
     stores_to_include = first_txn[first_txn <= end_date].index
-
-    return df[
+    return_df = df[
         (df["InventoryStore"].isin(stores_to_include))&
         (df["InventoryDate"]>=start_dt)&
         (df["InventoryDate"]<=end_date)
     ]
+    st.write(return_df["InventoryDate"].min())
+    st.write(return_df["InventoryDate"].max())
+    st.write(return_df["InventoryStore"].value_counts())
+    return return_df
 
 def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
     transfers = df[df["InventoryType"]=="Transfer In"]
