@@ -17,6 +17,8 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
     df = df.copy()
     df["InventoryDate"] = pd.to_datetime(df["InventoryDate"], format="%Y-%m-%d")
 
+    st.write("Most recent transaction: ", df["InventoryDate"].max())
+
     first_txn = (
         df[df["InventoryStore"].isin(retail_stores)]
         .groupby("InventoryStore")["InventoryDate"]
