@@ -15,10 +15,10 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
     ]
 
     df = df.copy()
-    df["InventoryDate"] = pd.to_datetime(df["InventoryDate"], errors="coerce")
-    df["InventoryStore"] = pd.to_numeric(df["InventoryStore"], errors="coerce")
-    df["Qty"] = pd.to_numeric(df["Qty"], errors="coerce")
-    df = df[df["InventoryStore"].isin(retail_stores)]
+    df["InventoryDate"] = pd.to_datetime(df["InventoryDate"], format="%Y-%m-%d")
+
+    st.write("Most recent transaction: ", df["InventoryDate"].max())
+
     first_txn = (
         df.groupby("InventoryStore")["InventoryDate"]
         .min()
@@ -87,25 +87,8 @@ def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
     return combined
 
 conn = st.connection("s3", type=FilesConnection)
-# Load RICS Inventory detail report for only footwear
-@st.cache_data(ttl=600)
-def load_inventory_detail():
-    prefix = "rics-file-exports/inventory_detail"
 
-    files = sorted(conn.fs.glob(f"{prefix}/*.csv"))
-
-    if not files:
-        return pd.DataFrame()
-
-    frames = []
-    for file_path in files:
-        df = conn.read(file_path, input_format="csv", ttl=600)
-        df["source_file"] = file_path
-        frames.append(df)
-
-    return pd.concat(frames, ignore_index=True)
-
-inventory_detail = load_inventory_detail()
+inventory_detail = conn.read("rics-file-exports/InventoryDetail.csv", input_format="csv", ttl=600)
 
 st.title("Shipout Analyzer")
 
