@@ -82,6 +82,7 @@ def load_inventory_detail():
 inventory_detail = load_inventory_detail()
 
 st.title("Shipout Analyzer")
+st.write(inventory_detail["source_file"].value_counts())
 
 today = datetime.today()
 # Set default option as year to date
