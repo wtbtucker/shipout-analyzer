@@ -30,9 +30,6 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
         (df["InventoryDate"]>=start_dt)&
         (df["InventoryDate"]<=end_date)
     ]
-    st.write(return_df["InventoryDate"].min())
-    st.write(return_df["InventoryDate"].max())
-    st.write(return_df["InventoryStore"].value_counts())
     return return_df
 
 def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
