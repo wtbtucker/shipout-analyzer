@@ -11,21 +11,24 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
     retail_stores = [
         1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16,
         17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-        30, 31, 32, 33
+        30, 31, 32, 33, 34
     ]
 
     df = df.copy()
     df["InventoryDate"] = pd.to_datetime(df["InventoryDate"], format="%m/%d/%Y")
-
+    df = df[df["InventoryStore"].isin(retail_stores)]
     first_txn = (
-        df[df["InventoryStore"].isin(retail_stores)]
-        .groupby("InventoryStore")["InventoryDate"]
+        df.groupby("InventoryStore")["InventoryDate"]
         .min()
     )
 
     stores_to_include = first_txn[first_txn <= start_dt].index
 
-    return df[(df["InventoryStore"].isin(stores_to_include))&(df["InventoryDate"]>=start_dt)&(df["InventoryDate"]<=end_date)]
+    return df[
+        (df["InventoryStore"].isin(stores_to_include))&
+        (df["InventoryDate"]>=start_dt)&
+        (df["InventoryDate"]<=end_date)
+    ]
 
 def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
     transfers = df[df["InventoryType"]=="Transfer In"]
