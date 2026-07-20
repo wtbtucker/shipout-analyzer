@@ -16,6 +16,7 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
 
     df = df.copy()
     df["InventoryDate"] = pd.to_datetime(df["InventoryDate"], errors="coerce")
+    df["InventoryStore"] = pd.to_numeric(df["InventoryStore"], errors="coerce")
     df = df[df["InventoryStore"].isin(retail_stores)]
     first_txn = (
         df.groupby("InventoryStore")["InventoryDate"]
