@@ -36,37 +36,58 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
     return return_df
 
 def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
-    transfers = df[df["InventoryType"]=="Transfer In"]
-    shipouts = transfers[transfers["Comment"].str.startswith("TO# SHP", na=False)]
-    shipouts_by_store = (
-        shipouts
-            .groupby("InventoryStore")
-            .agg(
-                shipout_units_requested=("Qty", "sum")
-            )
-    )
+    df = df.copy()
 
-    sales = df[df["InventoryType"]=="Sale"]
+    df["InventoryType"] = df["InventoryType"].astype("string").str.strip()
+    df["Comment"] = df["Comment"].astype("string").str.strip()
+    df["Qty"] = pd.to_numeric(df["Qty"], errors="coerce").fillna(0)
+
+    sales = df[df["InventoryType"] == "Sale"]
     sales_by_store = (
         sales
         .groupby("InventoryStore")
         .agg(total_units_sold=("Qty", "sum"))
     )
-    sales_by_store["total_units_sold"] = -1*sales_by_store["total_units_sold"]
-    
-    combined = pd.merge(sales_by_store, shipouts_by_store, left_index=True, right_index=True)
-    combined["shipout_percent_of_sales"] = combined["shipout_units_requested"] / combined["total_units_sold"]    
+    sales_by_store["total_units_sold"] = -1 * sales_by_store["total_units_sold"]
 
-    ecomm_orders = df[(df["InventoryType"]=="Transfer Out")&(df["Comment"].isna())]
+    transfers = df[df["InventoryType"] == "Transfer In"]
+    shipouts = transfers[transfers["Comment"].str.startswith("TO# SHP", na=False)]
+    shipouts_by_store = (
+        shipouts
+        .groupby("InventoryStore")
+        .agg(shipout_units_requested=("Qty", "sum"))
+    )
+
+    ecomm_orders = df[
+        (df["InventoryType"] == "Transfer Out") &
+        (df["Comment"].isna())
+    ]
     ecomm_orders_by_store = (
         ecomm_orders
         .groupby("InventoryStore")
         .agg(ecomm_orders=("Qty", "sum"))
     )
     ecomm_orders_by_store["ecomm_orders"] = -1 * ecomm_orders_by_store["ecomm_orders"]
-    combined_ecomm = pd.merge(combined, ecomm_orders_by_store, left_index=True, right_index=True)
-    combined_ecomm["ecomm_percent_of_sales"] = combined_ecomm["ecomm_orders"] / combined_ecomm["total_units_sold"]
-    return combined_ecomm
+
+    combined = (
+        sales_by_store
+        .join(shipouts_by_store, how="left")
+        .join(ecomm_orders_by_store, how="left")
+    )
+
+    combined[["shipout_units_requested", "ecomm_orders"]] = combined[
+        ["shipout_units_requested", "ecomm_orders"]
+    ].fillna(0)
+
+    combined["shipout_percent_of_sales"] = (
+        combined["shipout_units_requested"] / combined["total_units_sold"]
+    )
+
+    combined["ecomm_percent_of_sales"] = (
+        combined["ecomm_orders"] / combined["total_units_sold"]
+    )
+
+    return combined
 
 conn = st.connection("s3", type=FilesConnection)
 # Load RICS Inventory detail report for only footwear
