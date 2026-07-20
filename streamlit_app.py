@@ -62,7 +62,24 @@ def compute_shipouts_by_store(df: pd.DataFrame) -> pd.DataFrame:
 
 conn = st.connection("s3", type=FilesConnection)
 # Load RICS Inventory detail report for only footwear
-inventory_detail = conn.read("rics-file-exports/InventoryDetail.csv", input_format="csv", ttl=600)
+@st.cache_data(ttl=600)
+def load_inventory_detail():
+    prefix = "rics-file-exports/inventory_detail"
+
+    files = sorted(conn.fs.glob(f"{prefix}/*.csv"))
+
+    if not files:
+        return pd.DataFrame()
+
+    frames = []
+    for file_path in files:
+        df = conn.read(file_path, input_format="csv", ttl=600)
+        df["source_file"] = file_path
+        frames.append(df)
+
+    return pd.concat(frames, ignore_index=True)
+
+inventory_detail = load_inventory_detail()
 
 st.title("Shipout Analyzer")
 
