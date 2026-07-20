@@ -15,12 +15,15 @@ def filter_transactions(start_date: date, end_date: date, df: pd.DataFrame) -> p
     ]
 
     df = df.copy()
-    df["InventoryDate"] = pd.to_datetime(df["InventoryDate"], format="%m/%d/%Y", errors="coerce")
+    df["InventoryDate"] = pd.to_datetime(df["InventoryDate"], errors="coerce")
     df = df[df["InventoryStore"].isin(retail_stores)]
     first_txn = (
         df.groupby("InventoryStore")["InventoryDate"]
         .min()
     )
+    
+    st.write(df["InventoryDate"].min())
+    st.write(df["InventoryDate"].max())
     st.write(first_txn.sort_values())
     st.write(first_txn[first_txn > start_dt].sort_values())
 
@@ -87,10 +90,6 @@ def load_inventory_detail():
 inventory_detail = load_inventory_detail()
 
 st.title("Shipout Analyzer")
-st.write(inventory_detail["InventoryDate"].min())
-st.write(inventory_detail["InventoryDate"].max())
-
-
 
 today = datetime.today()
 # Set default option as year to date
